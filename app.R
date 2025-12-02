@@ -240,7 +240,7 @@ ui <- fluidPage(
       h3("Original Odds", style = "text-align: center;"),
       tableOutput("tbl2"),
       h4("Relevant picks owed to other teams"),
-      HTML("<p style='color: #FDB927; font-weight: bold;'>- ATL owns NO's pick</p>"),
+      HTML("<p style='color: #FDB927; font-weight: bold;'>- ATL owns more favorable of NO's pick and MIL's pick</p>"),
       HTML("<p style='color: #006bb6; font-weight: bold;'>- NYK owns WAS's pick, top-8 protected</p>"),
       HTML("<p style='color: #002D62; font-weight: bold;'>- OKC owns the two most/more favorable of its pick, HOU's pick (protected 1-4), and LAC's pick</p>"),
       HTML("<p style='color: #e31837; font-weight: bold;'>- WAS owns the least favorable/less favorable of OKC's pick, HOU's pick (protected 1-4), and LAC's pick</p>"),
