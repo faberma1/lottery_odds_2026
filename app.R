@@ -384,6 +384,16 @@ server <- function(input, output) {
           columns = c(`1`:`14`),
           rows = Team == "PHX"
         )
+      ) %>% 
+      tab_style(
+        style = list(
+          cell_fill(color = "#000000"),
+          cell_text(color = "#c4ced4", weight = "bold")
+        ),
+        locations = cells_body(
+          columns = c(`1`:`14`),
+          rows = Team == "ATL"
+        )
       )
   })
   
@@ -459,6 +469,16 @@ server <- function(input, output) {
         locations = cells_body(
           columns = c(`1`:`14`),
           rows = Team == "PHX"
+        )
+      ) %>% 
+      tab_style(
+        style = list(
+          cell_fill(color = "#000000"),
+          cell_text(color = "#c4ced4", weight = "bold")
+        ),
+        locations = cells_body(
+          columns = c(`1`:`14`),
+          rows = Team == "ATL"
         )
       )
   })
