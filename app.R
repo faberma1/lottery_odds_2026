@@ -242,8 +242,9 @@ ui <- fluidPage(
       h4("Relevant picks owed to other teams"),
       HTML("<p style='color: #FDB927; font-weight: bold;'>- ATL owns more favorable of NO's pick and MIL's pick</p>"),
       HTML("<p style='color: #006bb6; font-weight: bold;'>- NYK owns WAS's pick, top-8 protected</p>"),
-      HTML("<p style='color: #002D62; font-weight: bold;'>- OKC owns the two most/more favorable of its pick, HOU's pick (protected 1-4), and LAC's pick</p>"),
-      HTML("<p style='color: #e31837; font-weight: bold;'>- WAS owns the least favorable/less favorable of OKC's pick, HOU's pick (protected 1-4), and LAC's pick</p>"),
+      HTML("<p style='color: #1d428a; font-weight: bold;'>- LAC owns IND's pick if it falls between 5 and 9</p>"),
+      HTML("<p style='color: #002D62; font-weight: bold;'>- OKC owns the most favorable of its pick, HOU's pick (protected 1-4), and LAC's pick</p>"),
+      HTML("<p style='color: #006bb6; font-weight: bold;'>- PHI owns the second most favorable of OKC's pick, HOU's pick (protected 1-4), and LAC's pick</p>"),
       HTML("<p style='color: #002D62; font-weight: bold;'>- OKC owns UTA's pick, top-8 protected</p>"),
       HTML("<p style='color: #002D62; font-weight: bold;'>- OKC owns PHI's pick, top-4 protected</p>"),
       HTML("<p style='color: #000000; font-weight: bold;'>- SA owns the more favorable of their and ATL's pick</p>"),
@@ -394,6 +395,16 @@ server <- function(input, output) {
           columns = c(`1`:`14`),
           rows = Team == "ATL"
         )
+      ) %>% 
+      tab_style(
+        style = list(
+          cell_fill(color = "#1d428a"),
+          cell_text(color = "#c8102e", weight = "bold")
+        ),
+        locations = cells_body(
+          columns = c(`5`:`9`),
+          rows = Team == "IND"
+        )
       )
   })
   
@@ -479,6 +490,16 @@ server <- function(input, output) {
         locations = cells_body(
           columns = c(`1`:`14`),
           rows = Team == "ATL"
+        )
+      ) %>% 
+      tab_style(
+        style = list(
+          cell_fill(color = "#1d428a"),
+          cell_text(color = "#c8102e", weight = "bold")
+        ),
+        locations = cells_body(
+          columns = c(`5`:`9`),
+          rows = Team == "IND"
         )
       )
   })
