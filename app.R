@@ -8,23 +8,25 @@ library(rvest) # scraping
 
 
 # pull odds table from tankathon
-url <- "https://www.tankathon.com/pick_odds"
-page_html <- url %>%
-  read_html()
+#url <- "https://www.tankathon.com/pick_odds"
+#page_html <- url %>%
+#  read_html()
 
 # clean table, get it into long format
-lottery_odds <- page_html %>%
-  html_node("table") %>%
-  html_table(fill = TRUE) %>%
-  mutate(across(c(`11`:`14`), ~na_if(.,"")),
-         across(c(`11`:`14`), ~na_if(.,">0.0")),
-         across(c(`11`:`14`), ~as.double(.))) %>%
-  select(-Avg) %>%
-  mutate(across(c(`1`: `14`), ~replace_na(., 0.0))) %>%
-  pivot_longer(`1`:`14`, names_to = "pick", values_to = "odds") %>%
-  mutate(pick = as.double(pick)) %>%
-  mutate(Team = str_replace(Team, "^\\d+\\s*", ""))
+#lottery_odds <- page_html %>%
+#  html_node("table") %>%
+#  html_table(fill = TRUE) %>%
+#  mutate(across(c(`11`:`14`), ~na_if(.,"")),
+#         across(c(`11`:`14`), ~na_if(.,">0.0")),
+#         across(c(`11`:`14`), ~as.double(.))) %>%
+#  select(-Avg) %>%
+#  mutate(across(c(`1`: `14`), ~replace_na(., 0.0))) %>%
+#  pivot_longer(`1`:`14`, names_to = "pick", values_to = "odds") %>%
+#  mutate(pick = as.double(pick)) %>%
+#  mutate(Team = str_replace(Team, "^\\d+\\s*", ""))
 
+#write.csv(lottery_odds, "lottery_odds.csv")
+lottery_odds <- read_csv("lottery_odds.csv")
 
 # vector of team names for standings
 standings <- lottery_odds %>% 
@@ -56,6 +58,7 @@ df <- df %>%
   cbind(id)
 
 
+
 simulate_lottery <- function(df, standings,
                              force_team1 = "No Selection", force_team2 = "No Selection",
                              force_team3 = "No Selection", force_team4 = "No Selection",
@@ -75,6 +78,7 @@ simulate_lottery <- function(df, standings,
   if (any(duplicated(forced_teams_noselection))) {
     stop("You selected the same team more than once.")
   }
+  
   
   # Figure out teams that might have jumped
   teams_that_must_be_top4 <- c()
@@ -119,7 +123,7 @@ simulate_lottery <- function(df, standings,
   
   # Simulate top 4
   attempts <- 0
-  max_attempts <- 10000 # in case the scenario is so unlikely 
+  max_attempts <- 100000 # in case the scenario is so unlikely 
   while (TRUE) {
     temp_df <- df[!df$team %in% locked_teams, ]
     temp_results <- lottery_results[1:4]
