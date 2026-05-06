@@ -26,6 +26,7 @@ library(rvest) # scraping
 #  mutate(Team = str_replace(Team, "^\\d+\\s*", ""))
 
 #write.csv(lottery_odds, "lottery_odds.csv")
+#lottery_odds <- read_csv("/Users/shanefaberman/lottery_odds_2026/lottery_odds.csv")
 lottery_odds <- read_csv("lottery_odds.csv")
 
 # vector of team names for standings
@@ -62,7 +63,7 @@ df <- df %>%
 simulate_lottery <- function(df, standings,
                              force_team1 = "No Selection", force_team2 = "No Selection",
                              force_team3 = "No Selection", force_team4 = "No Selection",
-                             force_team5 = "No Selection", force_team6 = "No Selection",
+                             force_team5 = "No Selection", force_team6 = "IND",
                              force_team7 = "No Selection", force_team8 = "No Selection",
                              force_team9 = "No Selection", force_team10 = "No Selection",
                              force_team11 = "No Selection", force_team12= "No Selection",
@@ -78,90 +79,53 @@ simulate_lottery <- function(df, standings,
   if (any(duplicated(forced_teams_noselection))) {
     stop("You selected the same team more than once.")
   }
-  
-  
-  # Figure out teams that might have jumped
-  teams_that_must_be_top4 <- c()
-  for (pick_pos in 5:14) {
-    team_i <- forced_teams[pick_pos]
-    if (!is.null(team_i) && team_i != "No Selection") {
-      standing_rank <- match(team_i, standings)
-      if (!is.na(standing_rank) && pick_pos > standing_rank) {
-        worse_teams <- standings[(standing_rank + 1):length(standings)]
-        teams_that_must_be_top4 <- union(teams_that_must_be_top4, worse_teams)
-      }
+ 
+  # put all forced teams 1-4 into correct positions 
+  for (pick_pos in 1:4) {
+    forced_team <- forced_teams[pick_pos]
+    if (forced_team != "No Selection") {
+      lottery_results[pick_pos] = forced_team
     }
   }
   
-  # Assign forced top 4 if desired
-  forced_top4 <- forced_teams[1:4]
-  for (i in 1:4) {
-    team_i <- forced_top4[i]
-    if (!is.null(team_i) && team_i != "No Selection") {
-      if (!team_i %in% df$team) {
-        stop(paste0("Team ", team_i, " has no combinations — conditioning is impossible."))
-      }
-      lottery_results[i] <- team_i
-      df <- df[df$team != team_i, ]
+  # figure out pool of teams who the remaining lottery balls are drawn from
+  worst_cases <- standings[1:10] # best odds can drop to 5th, second best odds can drop to 6th, etc.
+  outside_top_four <- forced_teams[5:14]
+  for(i in 10:1) { # count backwards because if a team at the end of the list has its worst case, all teams in front do too
+    if(worst_cases[i] == outside_top_four[i]) {
+      outside_top_four[1:i] = worst_cases[1:i]
+      break # if true for i, it is true for i-1
     }
   }
+  already_picked <- lottery_results[!is.na(lottery_results)]
+  forced_outside_top_four <- outside_top_four[outside_top_four != "No Selection"]
   
-  # Make sure teams who are forced 5-14 stay there, figure out which teams jumped
-  locked_teams <- forced_teams[5:14]
-  locked_teams <- locked_teams[locked_teams != "No Selection"]
-  teams_that_must_be_top4 <- setdiff(teams_that_must_be_top4, locked_teams)
-  
-  locked_top_4 <- c()
-  for (pick in 1:4) {
-    team_i <- forced_top4[pick]
-    if (!is.null(team_i) && team_i != "No Selection") {
-      locked_top_4 <- union(locked_top_4, team_i)
-    }
-  }
-  
-  teams_that_must_be_top4 <- setdiff(teams_that_must_be_top4, locked_top_4)
-  
-  # Simulate top 4
-  attempts <- 0
-  max_attempts <- 100000 # in case the scenario is so unlikely 
-  while (TRUE) {
-    temp_df <- df[!df$team %in% locked_teams, ]
-    temp_results <- lottery_results[1:4]
-    fill_slots <- which(is.na(temp_results))
-    temp_must_be_top4 <- teams_that_must_be_top4
-    
-    for (slot in fill_slots) {
-      eligible <- temp_df[temp_df$team %in% temp_must_be_top4 | !(temp_df$team %in% forced_teams), ]
-      if (nrow(eligible) == 0) stop("No eligible teams to fill top 4 slots under constraints.")
+  # simulate lottery drawing
+  for(p in 1:4) {
+    if(is.na(lottery_results[p])) {
+      # Filter combinations: team not already picked AND not forced into 5-14
+      eligible_combos <- df %>% 
+        filter(!team %in% already_picked, !team %in% forced_outside_top_four)
       
-      selected <- eligible[sample(nrow(eligible), 1), ]
-      temp_results[slot] <- selected$team
-      temp_df <- temp_df[temp_df$team != selected$team, ]
-      temp_must_be_top4 <- setdiff(temp_must_be_top4, selected$team)
+      if(nrow(eligible_combos) == 0) stop("Impossible constraints!")
+      
+      selected_team <- sample(eligible_combos$team, 1)
+      lottery_results[p] <- selected_team
+      already_picked <- c(already_picked, selected_team)
     }
-    
-    if (length(temp_must_be_top4) == 0) {
-      lottery_results[1:4] <- temp_results
-      df <- df[!df$team %in% temp_results, ]
-      break
-    }
-    
-    attempts <- attempts + 1
-    if (attempts > max_attempts) stop("Could not satisfy top-4 constraints after many attempts.")
   }
   
-  # Assign picks 5–14 (worst-best record)
-  pick <- 5
-  for (i in 5:14) {
-    team_i <- forced_teams[i]
-    if (!is.null(team_i) && team_i != "No Selection") {
-      lottery_results[pick] <- team_i
-    } else {
-      already_selected <- c(lottery_results, locked_teams)
-      remaining <- standings[!(standings %in% already_selected)]
-      lottery_results[pick] <- remaining[1]
+  # fill in 5-14 by reverse standings order
+  remaining_teams <- standings[!(standings %in% lottery_results[1:4])]
+  lottery_results[5:14] <- remaining_teams
+  
+  for(p in 5:14) {
+    if(forced_teams[p] != "No Selection") {
+      if(lottery_results[p] != forced_teams[p]) {
+        # This means the user forced a scenario that is mathematically impossible
+        return("Error: This scenario is impossible under NBA rules.")
+      }
     }
-    pick <- pick + 1
   }
   
   return(lottery_results)
