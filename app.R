@@ -63,7 +63,7 @@ df <- df %>%
 simulate_lottery <- function(df, standings,
                              force_team1 = "No Selection", force_team2 = "No Selection",
                              force_team3 = "No Selection", force_team4 = "No Selection",
-                             force_team5 = "No Selection", force_team6 = "IND",
+                             force_team5 = "No Selection", force_team6 = "No Selection",
                              force_team7 = "No Selection", force_team8 = "No Selection",
                              force_team9 = "No Selection", force_team10 = "No Selection",
                              force_team11 = "No Selection", force_team12= "No Selection",
@@ -85,7 +85,7 @@ simulate_lottery <- function(df, standings,
     for (pick_pos in 1:4) {
       forced_team <- forced_teams[pick_pos]
       if (forced_team != "No Selection") {
-        lottery_results[pick_pos] = forced_team
+        lottery_results[pick_pos] <- forced_team
       }
     }
     
@@ -120,16 +120,20 @@ simulate_lottery <- function(df, standings,
     remaining_teams <- standings[!(standings %in% lottery_results[1:4])]
     lottery_results[5:14] <- remaining_teams
     
+    Matches <- TRUE
     for(p in 5:14) {
       if(forced_teams[p] != "No Selection") {
         if(lottery_results[p] != forced_teams[p]) {
           # This means the user forced a scenario that is mathematically impossible
-          print("Error: This scenario is impossible under NBA rules.")
-          next
+          # try again
+          Matches <- FALSE
+          
         }
       }
     }
-    VALID <- TRUE
+    if (Matches) {
+      VALID <- TRUE
+    }
     
     
   }
